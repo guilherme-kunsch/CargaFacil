@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id                Int      @id @default(autoincrement())
+  cnpj              String   @unique
+  razaoSocial       String
+  nomeFantasia      String?
+  inscricaoEstadual String?
+  telefone          String?
+  email             String?
+  endereco          EnderecoCliente[]
+  usuarios          Usuario[]
+  feedbackRecebido  Feedback[] @relation("ClienteFeedback")
+}
+
+model Transportadora {
+  id                Int      @id @default(autoincrement())
+  cnpj              String   @unique
+  razaoSocial       String
+  nomeFantasia      String?
+  inscricaoEstadual String?
+  telefone          String?
+  email             String?
+  metodosPagamento  String?
+  endereco          EnderecoTransportadora?
+  usuarios          Usuario[]
+  feedbackEnviado   Feedback[] @relation("TransportadoraFeedback")
+  tabelas           Tabela[]
+  categoria Categoria[]
+}
+
+
+model Usuario {
+  id                Int      @id @default(autoincrement())
+  idUnicoHash       String   @unique
+  cpfCnpj           String   @unique
+  nome              String
+  sobrenome         String?
+  email             String   @unique
+  telefone          String?
+  senha             String   // Hash da senha do usuário
+  cliente           Cliente? @relation(fields: [clienteId], references: [id])
+  clienteId         Int?
+  transportadora    Transportadora? @relation(fields: [transportadoraId], references: [id])
+  transportadoraId  Int?
+  feedbackEnviado   Feedback[] @relation("UsuarioFeedback")
+}
+
+
+model EnderecoTransportadora {
+  id             Int      @id @default(autoincrement())
+  transportadora Transportadora @relation(fields: [transportadoraId], references: [id])
+  transportadoraId Int @unique
+  rua            String?
+  numero         String?
+  pais           String?
+  complemento    String?
+  bairro         String?
+  cidade         String?
+  cep            String?
+  estado         String?
+}
+
+model EnderecoCliente {
+  id        Int     @id @default(autoincrement())
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+  clienteId Int
+  rua       String?
+  numero    String?
+  pais      String?
+  complemento String?
+  bairro    String?
+  cidade    String?
+  cep       String?
+  estado    String?
+}
+
+model Feedback {
+  id              Int      @id @default(autoincrement())
+  titulo          String
+  descricao       String?
+  nota            Int
+  transportadora  Transportadora @relation(name: "TransportadoraFeedback", fields: [transportadoraId], references: [id])
+  transportadoraId Int
+  cliente         Cliente? @relation(name: "ClienteFeedback", fields: [clienteId], references: [id])
+  clienteId       Int?
+    usuario         Usuario @relation(name: "UsuarioFeedback", fields: [usuarioId], references: [id])
+    usuarioId       Int
+}
+
+model Tabela {
+  id                Int           @id @default(autoincrement())
+  transportadoraId  Int @unique         
+  transportadora    Transportadora @relation(fields: [transportadoraId], references: [id])
+  cep_inicial String
+  cep_final String
+  prazo Int
+}
+
+model Categoria {
+  id                Int           @id @default(autoincrement())
+  codigo Int
+  descricao String
+  transportadoraId Int @unique
+  transportadora    Transportadora @relation(fields: [transportadoraId], references: [id])
+}
